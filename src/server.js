@@ -11,8 +11,21 @@ const { sanitizeUser, isValidRole, canAccessTicket } = require("./utils");
 
 const app = express();
 const port = process.env.PORT || 4000;
+const allowedOrigins = (process.env.FRONTEND_URL || "*")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""));
 
-app.use(cors({ origin: process.env.FRONTEND_URL || "*", credentials: true }));
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes("*") || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+        return callback(null, true);
+      }
+      return callback(new Error("Origen no permitido por CORS"));
+    },
+    credentials: true
+  })
+);
 app.use(express.json());
 
 function sign(user) {
